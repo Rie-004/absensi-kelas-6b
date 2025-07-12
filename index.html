@@ -2,176 +2,187 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Absensi Kelas 6B - SDN 004 Balikpapan Barat</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #fef9fb; padding: 20px; }
+    body { font-family: Arial; padding: 20px; background: #fff0f5; }
     h1, h2 { text-align: center; color: #c2185b; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-    input[type="checkbox"] { transform: scale(1.2); }
-    .controls, .rekap, .laporan { margin-top: 30px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
     .btn {
-      padding: 8px 14px;
-      background-color: #d63384;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      margin-right: 5px;
-      cursor: pointer;
+      padding: 8px 12px; background-color: #d63384; color: white;
+      border: none; border-radius: 5px; margin: 5px; cursor: pointer;
     }
     .btn:hover { background-color: #a01f5d; }
-    canvas { margin-top: 30px; }
+    canvas { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Absensi Digital Kelas 6B - SDN 004 Balikpapan Barat</h1>
 
-  <div class="controls">
-    <label for="tanggal">📅 Pilih Tanggal:</label>
-    <input type="date" id="tanggal" />
-    <input type="text" id="namaBaru" placeholder="➕ Nama siswa baru" />
-    <button class="btn" onclick="tambahSiswa()">Tambah Siswa</button>
-  </div>
+<h1>Absensi Digital Kelas 6B - SDN 004 Balikpapan Barat</h1>
+<p><label>📅 Pilih Tanggal: <input type="date" id="tanggal"></label></p>
+<input type="text" id="namaBaru" placeholder="➕ Nama siswa baru">
+<button class="btn" onclick="tambahSiswa()">Tambah Siswa</button>
 
-  <div class="absensi">
-    <h2>Form Absen</h2>
-    <table id="tabelAbsensi">
-      <thead>
-        <tr><th>Nama</th><th>S</th><th>I</th><th>A</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<h2>Form Absen</h2>
+<table id="tabelAbsensi">
+  <thead><tr><th>No</th><th>Nama</th><th>S</th><th>I</th><th>A</th></tr></thead>
+  <tbody></tbody>
+</table>
+<button class="btn" onclick="submitAbsen()">✅ Submit</button>
 
-  <div class="rekap">
-    <h2>Rekap Tidak Hadir Hari Ini</h2>
-    <ul id="rekapTidakHadir"></ul>
-  </div>
+<h2>Rekap Bulanan</h2>
+<table id="rekapBulanan">
+  <thead><tr><th>Nama</th><th>Sakit</th><th>Izin</th><th>Alpa</th></tr></thead>
+  <tbody></tbody>
+</table>
 
-  <div class="laporan">
-    <h2>LAPORAN KEHADIRAN KELAS 6B BULAN ... TAHUN ...</h2>
-    <button class="btn" onclick="eksporPDF()">📄 Ekspor PDF</button>
-    <button class="btn" onclick="eksporExcel()">📊 Ekspor Excel</button>
-    <button class="btn" onclick="kirimWhatsApp()">📲 Kirim WhatsApp</button>
-    <canvas id="grafikAbsensi" height="100"></canvas>
-  </div>
+<div style="text-align:center">
+  <button class="btn" onclick="eksporPDF()">📄 Ekspor PDF</button>
+  <button class="btn" onclick="eksporExcel()">📥 Ekspor Excel</button>
+</div>
 
-  <script>
-    const siswa = [
-      "AHMAD RAMADHAN", "AL ALI MAULANA ARYANSYAH", "ALFAITCH HABIBIE RAMADHAN", "ALFIAN SYAHREZA",
-      "APRILIA MARWAH", "ARRAFAH AIDIL OKTARIADY", "ASHILAH PUTRI JAFNI", "AULIA AZZAHRA PUTRI SALSABIL",
-      "BILAL ABDUL RAZAK", "IQBAL ZAKI", "KEYSA APRILLIA PUTRI", "MOHAMMAD ABIDZAR PERMANA",
-      "MUHAMMAD ARIFIN", "MUHAMMAD FAJRIL", "MUHAMMAD HERDIANSYAH", "MUHAMMAD RIAN ANUGRAH",
-      "NATASYA NURUL ASYIQIN", "NITA NURHIDAYAH", "NUR KHAFIZAH AWALIAH", "NUR SALFIRAH",
-      "NUR SYAKIRAH", "SALFAH TREE MADINAH", "VANIA IGNATA TAMBING", "ZADA ARKANA SANJAYA", "ZAHIDA NUR AFIEA"
-    ];
+<h2>Grafik Kehadiran Bulanan</h2>
+<canvas id="grafikBulanan" height="100"></canvas>
 
-    let absensiHariIni = [];
+<script>
+const siswa = [
+  "AHMAD RAMADHAN", "AL ALI MAULANA ARYANSYAH", "ALFAITCH HABIBIE RAMADHAN", "ALFIAN SYAHREZA",
+  "APRILIA MARWAH", "ARRAFAH AIDIL OKTARIADY", "ASHILAH PUTRI JAFNI", "AULIA AZZAHRA PUTRI SALSABIL",
+  "BILAL ABDUL RAZAK", "IQBAL ZAKI", "KEYSA APRILLIA PUTRI", "MOHAMMAD ABIDZAR PERMANA",
+  "MUHAMMAD ARIFIN", "MUHAMMAD FAJRIL", "MUHAMMAD HERDIANSYAH", "MUHAMMAD RIAN ANUGRAH",
+  "NATASYA NURUL ASYIQIN", "NITA NURHIDAYAH", "NUR KHAFIZAH AWALIAH", "NUR SALFIRAH",
+  "NUR SYAKIRAH", "SALFAH TREE MADINAH", "VANIA IGNATA TAMBING", "ZADA ARKANA SANJAYA", "ZAHIDA NUR AFIEA"
+];
+let absenData = JSON.parse(localStorage.getItem("rekap6B")) || [];
 
-    function tampilkanTabelAbsensi() {
-      const tbody = document.querySelector('#tabelAbsensi tbody');
-      tbody.innerHTML = "";
-      siswa.forEach(nama => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${nama}</td>
-          <td><input type="checkbox" onchange="setAbsen('${nama}', 'S')"></td>
-          <td><input type="checkbox" onchange="setAbsen('${nama}', 'I')"></td>
-          <td><input type="checkbox" onchange="setAbsen('${nama}', 'A')"></td>
-        `;
-        tbody.appendChild(tr);
-      });
+function tampilkanTabel() {
+  const tbody = document.querySelector("#tabelAbsensi tbody");
+  tbody.innerHTML = "";
+  siswa.forEach((nama, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${nama}</td>
+        <td><input type="checkbox" data-nama="${nama}" data-status="S" /></td>
+        <td><input type="checkbox" data-nama="${nama}" data-status="I" /></td>
+        <td><input type="checkbox" data-nama="${nama}" data-status="A" /></td>
+      </tr>`;
+  });
+}
+
+function tambahSiswa() {
+  const input = document.getElementById("namaBaru").value.trim();
+  if (input && !siswa.includes(input)) {
+    siswa.push(input);
+    document.getElementById("namaBaru").value = "";
+    tampilkanTabel();
+  }
+}
+
+function submitAbsen() {
+  const tanggal = document.getElementById("tanggal").value;
+  if (!tanggal) return alert("Pilih tanggal terlebih dahulu.");
+  const input = document.querySelectorAll("input[type='checkbox']:checked");
+  const hasil = [];
+  input.forEach(i => {
+    hasil.push({ nama: i.dataset.nama, status: i.dataset.status });
+  });
+  absenData = absenData.filter(a => a.tanggal !== tanggal);
+  absenData.push({ tanggal, data: hasil });
+  localStorage.setItem("rekap6B", JSON.stringify(absenData));
+  tampilkanRekapBulanan();
+  updateChart();
+}
+
+function tampilkanRekapBulanan() {
+  const map = {};
+  siswa.forEach(n => map[n] = { S: 0, I: 0, A: 0 });
+  absenData.forEach(entry => {
+    entry.data.forEach(d => {
+      if (map[d.nama]) map[d.nama][d.status]++;
+    });
+  });
+
+  const tbody = document.querySelector("#rekapBulanan tbody");
+  tbody.innerHTML = "";
+  Object.entries(map).forEach(([nama, val]) => {
+    if (val.S || val.I || val.A) {
+      tbody.innerHTML += `<tr><td>${nama}</td><td>${val.S}</td><td>${val.I}</td><td>${val.A}</td></tr>`;
     }
+  });
 
-    function setAbsen(nama, status) {
-      absensiHariIni = absensiHariIni.filter(a => a.nama !== nama);
-      absensiHariIni.push({ nama, status });
-      tampilkanRekap();
-      updateChart();
+  return map;
+}
+
+function eksporExcel() {
+  let csv = "Nama,Sakit,Izin,Alpa\\n";
+  const map = tampilkanRekapBulanan();
+  for (const [nama, val] of Object.entries(map)) {
+    csv += `${nama},${val.S},${val.I},${val.A}\\n`;
+  }
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rekap_kehadiran.csv";
+  a.click();
+}
+
+function eksporPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text("LAPORAN KEHADIRAN KELAS 6B", 20, 20);
+  let y = 30;
+  const map = tampilkanRekapBulanan();
+  for (const [nama, val] of Object.entries(map)) {
+    if (val.S || val.I || val.A) {
+      doc.text(`${nama}: S=${val.S}, I=${val.I}, A=${val.A}`, 10, y);
+      y += 10;
     }
+  }
+  doc.save("laporan_kehadiran.pdf");
+}
 
-    function tampilkanRekap() {
-      const ul = document.getElementById('rekapTidakHadir');
-      ul.innerHTML = "";
-      absensiHariIni.forEach(item => {
-        ul.innerHTML += `<li>${item.nama} (${item.status})</li>`;
-      });
-    }
+let chart;
+function updateChart() {
+  const total = { S: 0, I: 0, A: 0 };
+  absenData.forEach(entry => {
+    entry.data.forEach(d => {
+      if (total[d.status] !== undefined) total[d.status]++;
+    });
+  });
 
-    function tambahSiswa() {
-      const namaBaru = document.getElementById("namaBaru").value.trim();
-      if (namaBaru && !siswa.includes(namaBaru)) {
-        siswa.push(namaBaru);
-        document.getElementById("namaBaru").value = "";
-        tampilkanTabelAbsensi();
+  const ctx = document.getElementById("grafikBulanan").getContext("2d");
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Sakit", "Izin", "Alpa"],
+      datasets: [{
+        label: "Jumlah Bulanan",
+        data: [total.S, total.I, total.A],
+        backgroundColor: ["#ffc107", "#17a2b8", "#dc3545"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: "Grafik Rekap Bulanan" }
       }
     }
+  });
+}
 
-    function eksporPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text("LAPORAN KEHADIRAN KELAS 6B", 20, 10);
-      absensiHariIni.forEach((a, i) => {
-        doc.text(`${i + 1}. ${a.nama}: ${a.status}`, 10, 20 + i * 10);
-      });
-      doc.save("laporan_kehadiran.pdf");
-    }
-
-    function eksporExcel() {
-      let csv = "Nama,Status\\n";
-      absensiHariIni.forEach(a => {
-        csv += `${a.nama},${a.status}\\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "laporan_kehadiran.csv";
-      a.click();
-    }
-
-    function kirimWhatsApp() {
-      let teks = "Rekap Absensi Kelas 6B:\\n";
-      absensiHariIni.forEach(a => {
-        teks += `- ${a.nama}: ${a.status}\\n`;
-      });
-      const link = "https://wa.me/?text=" + encodeURIComponent(teks);
-      window.open(link, "_blank");
-    }
-
-    function updateChart() {
-      const count = { S: 0, I: 0, A: 0 };
-      absensiHariIni.forEach(a => count[a.status]++);
-      chart.data.datasets[0].data = [count.S, count.I, count.A];
-      chart.update();
-    }
-
-    let chart;
-    window.onload = function () {
-      tampilkanTabelAbsensi();
-      const ctx = document.getElementById("grafikAbsensi").getContext("2d");
-      chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Sakit", "Izin", "Alpa"],
-          datasets: [{
-            label: "Jumlah",
-            data: [0, 0, 0],
-            backgroundColor: ["#ffc107", "#17a2b8", "#dc3545"]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: "Grafik Kehadiran Hari Ini" }
-          }
-        }
-      });
-    };
-  </script>
+window.onload = () => {
+  tampilkanTabel();
+  tampilkanRekapBulanan();
+  updateChart();
+};
+</script>
 </body>
 </html>
